@@ -88,22 +88,18 @@ namespace NickX.TinyORM.Mapping.Classes.Fluent
         #endregion
 
         #region Constraints
-        public FluentTableDefinition<T> SetPrimaryKey(Expression<Func<T, object>> propertyExpression, string columnName = null, int length = default, DefaultValues defaultValue = DefaultValues.AutoIncrement, object customDefaultValue = null)
+        public FluentTableDefinition<T> SetPrimaryKey(Expression<Func<T, object>> propertyExpression)
         {
             if (this.PrimaryKey != null)
                 throw new InvalidOperationException("Only a single property can be set as primary key!");
 
             var property = propertyExpression.ToProperty();
 
-            // check if already mapped
-            if (_columns.Any(c => c.Property == property))
-                throw new InvalidOperationException("PrimaryKeys should not be mapped, simple set them via SetPrimaryKey(...).");
-
-            if (columnName == null)
-                columnName = property.Name;
-
-            var colDef = new FluentColumnDefinition(property, columnName, false, length, defaultValue, customDefaultValue);
-
+            var colDef = this.Columns.SingleOrDefault(c => c.Property.Name == property.Name);
+            if (colDef == null)
+                throw new InvalidOperationException("The colum you want to set as primary key is not yet mapped!");
+            
+            _columns.RemoveAll(c => c.Property.Name == property.Name);
             this.PrimaryKey = colDef;
             return this;
         }
@@ -112,6 +108,9 @@ namespace NickX.TinyORM.Mapping.Classes.Fluent
         {
             var property = propertyExpression.ToProperty();
             var referencedProperty = referencedPropertyExpression.ToProperty();
+
+            if (PrimaryKey != null && PrimaryKey.Property.Name == property.Name)
+                throw new InvalidOperationException("The foreign key cannot be primary key at the same time");
 
             if (_foreignKeys.Any(fk => fk.BoundProperty == property && fk.ReferencedProperty == referencedProperty))
                 throw new InvalidOperationException(string.Format("A foreign key definition from Property {0} to Type {1} with Property {2} already exists.", property.Name, typeof(TRef).Name, referencedProperty.Name));
@@ -133,9 +132,9 @@ namespace NickX.TinyORM.Mapping.Classes.Fluent
         {
             var property = propertyExpression.ToProperty();
 
-            // throw if is set as primary key
-            if (PrimaryKey != null && property == PrimaryKey.Property)
-                throw new Exception(string.Format("The Property {0} is set as PrimaryKey, it doesn't need to be mapped via MapColumn(...)."));
+            //// throw if is set as primary key
+            //if (PrimaryKey != null && property == PrimaryKey.Property)
+            //    throw new Exception(string.Format("The Property {0} is set as PrimaryKey, it doesn't need to be mapped via MapColumn(...)."));
 
             // throw if already mapped
             if (_columns.Any(c => c.Property == property))
@@ -159,9 +158,9 @@ namespace NickX.TinyORM.Mapping.Classes.Fluent
         {
             var property = propertyExpression.ToProperty();
 
-            // throw if is set as primary key
-            if (PrimaryKey != null && property == PrimaryKey.Property)
-                throw new Exception(string.Format("The Property {0} is set as PrimaryKey, it doesn't need to be mapped via MapColumn(...)."));
+            //// throw if is set as primary key
+            //if (PrimaryKey != null && property == PrimaryKey.Property)
+            //    throw new Exception(string.Format("The Property {0} is set as PrimaryKey, it doesn't need to be mapped via MapColumn(...)."));
 
             // throw if already mapped
             if (_columns.Any(c => c.Property == property))
@@ -179,9 +178,9 @@ namespace NickX.TinyORM.Mapping.Classes.Fluent
         {
             var property = propertyExpression.ToProperty();
 
-            // throw if is set as primary key
-            if (PrimaryKey != null && property == PrimaryKey.Property)
-                throw new Exception(string.Format("The Property {0} is set as PrimaryKey, it doesn't need to be mapped via MapColumn(...)."));
+            //// throw if is set as primary key
+            //if (PrimaryKey != null && property == PrimaryKey.Property)
+            //    throw new Exception(string.Format("The Property {0} is set as PrimaryKey, it doesn't need to be mapped via MapColumn(...)."));
 
             // throw if already mapped
             if (_columns.Any(c => c.Property == property))
@@ -204,9 +203,9 @@ namespace NickX.TinyORM.Mapping.Classes.Fluent
         {
             var property = propertyExpression.ToProperty();
 
-            // throw if is set as primary key
-            if (PrimaryKey != null && property == PrimaryKey.Property)
-                throw new Exception(string.Format("The Property {0} is set as PrimaryKey, it doesn't need to be mapped via MapColumn(...).", property.Name));
+            //// throw if is set as primary key
+            //if (PrimaryKey != null && property == PrimaryKey.Property)
+            //    throw new Exception(string.Format("The Property {0} is set as PrimaryKey, it doesn't need to be mapped via MapColumn(...).", property.Name));
 
             // throw if already mapped
             if (_columns.Any(c => c.Property == property))

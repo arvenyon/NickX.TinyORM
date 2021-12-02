@@ -6,6 +6,8 @@ using NickX.TinyORM.Persistence.Queries;
 using NickX.TinyORM.Persistence.Repositories.Classes;
 using System;
 
+#pragma warning disable RCS1102
+
 namespace ConsoleTest
 {
     internal class Program
@@ -14,14 +16,18 @@ namespace ConsoleTest
         {
             var mapping = new FluentMapping()
                 .MapTable<CompanyModel>()
-                    .SetPrimaryKey(p => p.Guid, null, default, DefaultValues.UniqueIdentifier)
+                    .MapColumn(
+                
+                p => p.Guid, false, default, DefaultValues.UniqueIdentifier)
                     .MapColumn(p => p.DateCreate, false, default, DefaultValues.Timestamp)
                     .MapColumn(p => p.DateModified, false, default, DefaultValues.Timestamp)
+                    .SetPrimaryKey(p => p.Guid)
                     .PackUp()
                 .MapTable<PersonModel>()
-                    .SetPrimaryKey(p => p.Guid, null, default, DefaultValues.UniqueIdentifier)
+                    .MapColumn(p => p.Guid, false, default, DefaultValues.UniqueIdentifier)
                     .MapColumn(p => p.DateCreate, false, default, DefaultValues.Timestamp)
                     .MapColumn(p => p.DateModified, false, default, DefaultValues.Timestamp)
+                    .SetPrimaryKey(p => p.Guid)
                     .AddForeignKey<CompanyModel>(p => p.CompanyGuid, p => p.Guid)
                     .PackUp();
 
@@ -35,8 +41,11 @@ namespace ConsoleTest
                 Console.WriteLine("------------- [Company] -------------");
                 Console.WriteLine(company);
 
+                var companyCondition = companyRepository.CreateQueryConditionBuilder()
+                    .Start(c => c.CompanyType, QueryOperators.Equals, CompanyTypes.Customer);
+
                 var condition = personRepository.CreateQueryConditionBuilder()
-                    .Start(p => p.CompanyGuid, QueryOperators.Equals, company.Guid);
+                    .Start(p => p.Guid, QueryOperators.Equals, company.Guid);
                 foreach (var person in personRepository.Multiple(condition))
                 {
                     Console.WriteLine("----------------------------------------------------------- [Person]");
