@@ -36,22 +36,43 @@ namespace ConsoleTest
             var companyRepository = new SqlRepository<CompanyModel>(conFactory);
             var personRepository = new SqlRepository<PersonModel>(conFactory);
 
-            foreach (var company in companyRepository.All())
+            companyRepository.OnInsert += (sender, inserted) =>
             {
-                Console.WriteLine("------------- [Company] -------------");
-                Console.WriteLine(company);
+                Console.WriteLine("Company has been inserted: ");
+                Console.WriteLine(inserted);
+            };
+            companyRepository.OnUpdate += (sender, inserted, deleted) =>
+            {
+                Console.WriteLine("Old Entity: ");
+                Console.WriteLine(deleted);
+                Console.WriteLine("New Entity: ");
+                Console.WriteLine(inserted);
+            };
+            companyRepository.OnDelete += (sender, deleted) =>
+            {
+                Console.WriteLine("Deleted Entity:");
+                Console.WriteLine(deleted);
+            };
 
-                var companyCondition = companyRepository.CreateQueryConditionBuilder()
-                    .Start(c => c.CompanyType, QueryOperators.Equals, CompanyTypes.Customer);
+            //foreach (var company in companyRepository.All())
+            //{
+            //    Console.WriteLine("------------- [Company] -------------");
+            //    Console.WriteLine(company);
 
-                var condition = personRepository.CreateQueryConditionBuilder()
-                    .Start(p => p.Guid, QueryOperators.Equals, company.Guid);
-                foreach (var person in personRepository.Multiple(condition))
-                {
-                    Console.WriteLine("----------------------------------------------------------- [Person]");
-                    Console.WriteLine(person);
-                }
-            }
+            //    var companyCondition = companyRepository.CreateQueryConditionBuilder()
+            //        .Start(c => c.CompanyType, QueryOperators.Equals, CompanyTypes.Customer);
+
+            //    var condition = personRepository.CreateQueryConditionBuilder()
+            //        .Start(p => p.Guid, QueryOperators.Equals, company.Guid);
+            //    foreach (var person in personRepository.Multiple(condition))
+            //    {
+            //        Console.WriteLine("----------------------------------------------------------- [Person]");
+            //        Console.WriteLine(person);
+            //    }
+            //}
+
+            var company = companyRepository.Single(Guid.Parse("8D7BD2FF-2154-EC11-839A-00E04CC3A503"));
+            companyRepository.Delete(company);
 
             //var company = new CompanyModel()
             //{

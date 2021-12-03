@@ -46,15 +46,6 @@ namespace NickX.TinyORM.Persistence.PersistenceUtils
             return retVal;
         }
 
-        //public static object GetValueForSql(this PropertyInfo property, object entity)
-        //{
-        //    object retVal = null;
-        //    if (property.PropertyType.IsEnum)
-        //    {
-        //        retVal = (int)property.
-        //    }
-        //}
-
         public static object ConvertValueFromSql(this object value, Type targetType)
         {
             object retVal = value;

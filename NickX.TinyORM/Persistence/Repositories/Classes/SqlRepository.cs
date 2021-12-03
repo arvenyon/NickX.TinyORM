@@ -13,6 +13,14 @@ namespace NickX.TinyORM.Persistence.Repositories.Classes
 {
     public class SqlRepository<T> : IRepository<T> where T : class, new()
     {
+        public delegate void OnUpdateEvent(object sender, T inserted, T deleted);
+        public delegate void OnDeleteEvent(object sender, T deleted);
+        public delegate void OnInsertEvent(object sender, T inserted);
+
+        public event OnUpdateEvent OnUpdate;
+        public event OnDeleteEvent OnDelete;
+        public event OnInsertEvent OnInsert;
+
         private SqlConnectionFactory _conFactory;
         private ITableDefinition _table;
 
@@ -77,22 +85,6 @@ namespace NickX.TinyORM.Persistence.Repositories.Classes
 
             return retVal;
         }
-
-        //public void BulkDelete(T[] entity)
-        //{
-        //    throw new NotImplementedException();
-        //}
-
-        //public void BulkInsert(T[] entity)
-        //{
-        //    throw new NotImplementedException();
-        //}
-
-        //public void BulkUpdate(T[] entity)
-        //{
-        //    throw new NotImplementedException();
-        //}
-
         public void Delete(T entity)
         {
             // get key value
@@ -110,6 +102,9 @@ namespace NickX.TinyORM.Persistence.Repositories.Classes
 
                 // execute delete statement
                 new SqlCommand(query, con).ExecuteNonQuery();
+
+                // invoke event if subscribed
+                this.OnDelete?.Invoke(this, entity);
             }
         }
 
@@ -173,6 +168,9 @@ namespace NickX.TinyORM.Persistence.Repositories.Classes
 
                 // create new sqlcommand & execute non query
                 var key = new SqlCommand(query, con).ExecuteScalar();
+
+                // invoke event if subscribed
+                this.OnInsert?.Invoke(this, Single(key));
 
                 // return converted for .NET
                 return key.ConvertValueFromSql(_table.PrimaryKey.Property.PropertyType);
@@ -275,20 +273,35 @@ namespace NickX.TinyORM.Persistence.Repositories.Classes
 
         public void Update(T entity)
         {
+            
             // get update columns & values
             List<string> updateColumns = new();
 
             // build
             foreach (var col in _updateColumns)
             {
-                var val = col.Property.GetValue(entity).ConvertValueForSql();
+                object val = null;
+                if (col.Property.PropertyType.IsEnum)
+                {
+                    val = ((int)col.Property.GetValue(entity)).ConvertValueForSql();
+                }
+                else
+                { 
+                    val = col.Property.GetValue(entity).ConvertValueForSql();
+                }
+
                 updateColumns.Add(string.Format("[{0}] = '{1}'", col.ColumnName, val));
             }
             string qUpdateColumns = string.Join(",", updateColumns);
 
-            // build full statement
+            // get key
             var key = _table.PrimaryKey.Property.GetValue(entity).ConvertValueForSql();
-            string query = string.Format("update [{0}] set {2} where [{3}] = '{4}'",
+
+            // get existing entity for event
+            var existingEntity = Single(key);
+
+            // build update query
+            string query = string.Format("update [{0}] set {1} where [{2}] = '{3}'",
                 _table.TableName,
                 qUpdateColumns,
                 _table.PrimaryKey.ColumnName,
@@ -302,6 +315,9 @@ namespace NickX.TinyORM.Persistence.Repositories.Classes
 
                 // init new command & execute
                 new SqlCommand(query, con).ExecuteNonQuery();
+
+                // invoke event if subscribed
+                this.OnUpdate?.Invoke(this, entity, existingEntity);
             }
         } 
         #endregion

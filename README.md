@@ -5,6 +5,7 @@
 * Generic repository pattern as persistence layer, already implemented
 * Attach to existing databases
 * Database creation based on your mapping & definitions
+* Events for CRUD operations which you can hook into
 
 ## Dependencies
 * [FastMember >=1.5.0](https://www.nuget.org/packages/FastMember/)
@@ -167,8 +168,39 @@ public enum QueryOperators
 }
 ```
 
-# Issues, Bugs & Requests
+## Events
+Insert, Update & Delete operations all have events attached to them. They're provided by the repository.
+
+> Inserted & Updated will always be the Type you've gotten the repository for
+```c#
+var foos = new SqlRepository<Foo>(conFactory);
+
+// after insert
+foos.OnInsert += (sender, inserted) =>
+{
+	Console.WriteLine("Inserted Foo:");
+	Console.WriteLine(inserted);
+}
+
+// after update
+foos.OnUpdate += (sender, inserted, deleted) => 
+{
+	Console.WriteLine("Updated Foo:");
+	Console.WriteLine(inserted);
+	Console.WriteLine("Old Foo:");
+	Console.WriteLine(deleted);
+}
+
+// after delete
+foos.OnDelete += (sender, deleted) =>
+{
+	Console.WriteLine("Deleted Foo:");
+	Console.WriteLine(deleted);
+}
+```
+
+## Issues, Bugs & Requests
 Please consider creating an issue if you encounter any problems, bugs, errors or inconveniences. I will happily continue supporting this project.
 
-# Disclaimer
-This is a personal project which initially started out as a project for learning purposes.
+## Disclaimer
+This is a personal project which initially started out as a project for learning purposes. Take this information for whatever you want it to. :)
