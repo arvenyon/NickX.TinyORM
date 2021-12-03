@@ -57,7 +57,7 @@ var newFoo = new Foo()
 int insertedKey = (int)foos.Insert(newFoo);
 ```
 ## Simplified Overview
-<img src="https://i.ibb.co/cwWzpdF/Herunterladen.png" />
+<img src="https://i.ibb.co/h2GwcfD/Tiny-ORM-Simplified-Visualization.png" />
 
 ## CRUD Operations
 All well known CRUD functionality is packed into repositories.
