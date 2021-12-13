@@ -204,4 +204,5 @@ foos.OnDelete += (sender, deleted) =>
 Please consider creating an issue if you encounter any problems, bugs, errors or inconveniences. I will happily continue supporting this project.
 
 ## Disclaimer
-This is a personal project which initially started out as a project for learning purposes. Take this information for whatever you want it to. :)
+This is a personal project which initially started out as a project for learning purposes. Take this information for whatever you want it to. :)\
+Also, despite the fact that GitHub sais, this repository would consist of 98% JavaScript, nothing, I repeat, not a single ducking thing here, is written in JavaScript. It's all C#. 
