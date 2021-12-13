@@ -8,10 +8,17 @@
 * Events for CRUD operations which you can hook into
 
 ## Dependencies
+* **.NET 5**
 * [FastMember >=1.5.0](https://www.nuget.org/packages/FastMember/)
 * [System.Data.SqlClient >=4.8.3](https://www.nuget.org/packages/System.Data.SqlClient/)
 * [System.Linq.Expressions >=4.3.0](https://www.nuget.org/packages/System.Linq.Expressions/)
 * [Humanizer >= 2.13.14](https://www.nuget.org/packages/Humanizer/2.13.14)
+
+## Installation
+You can either clone this repository, build it & use the compiled dlls or simply install the NuGet Package:
+```cmd
+PM> Install-Package NickX.TinyORM
+```
 
 ## Super Quick Start
 1) Get your SQL ConnectionString
