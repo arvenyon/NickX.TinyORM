@@ -11,7 +11,7 @@
 * [FastMember >=1.5.0](https://www.nuget.org/packages/FastMember/)
 * [System.Data.SqlClient >=4.8.3](https://www.nuget.org/packages/System.Data.SqlClient/)
 * [System.Linq.Expressions >=4.3.0](https://www.nuget.org/packages/System.Linq.Expressions/)
-* [NuGet Gallery >= 2.13.14](https://www.nuget.org/packages/Humanizer/2.13.14)
+* [Humanizer >= 2.13.14](https://www.nuget.org/packages/Humanizer/2.13.14)
 
 ## Super Quick Start
 1) Get your SQL ConnectionString
