@@ -1,9 +1,11 @@
-﻿using System;
+﻿using NickX.TinyORM.Mapping.Attributes;
+using System;
 
 namespace ConsoleTest.Models
 {
     public abstract class BaseModel
     {
+        [PrimaryKey]
         public Guid Guid { get; set; }
         public DateTime DateCreate { get; set; }
         public DateTime DateModified { get; set; }

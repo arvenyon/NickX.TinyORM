@@ -1,4 +1,5 @@
-﻿using NickX.TinyORM.Mapping.Enums;
+﻿using NickX.TinyORM.Mapping.Classes.Annotation;
+using NickX.TinyORM.Mapping.Enums;
 using NickX.TinyORM.Mapping.Interfaces;
 using NickX.TinyORM.Persistence.Connections.Interfaces;
 using NickX.TinyORM.Persistence.PersistenceUtils;
@@ -43,6 +44,8 @@ namespace NickX.TinyORM.Persistence.Connections.Classes
             builder.InitialCatalog = "master";
             _masterConnectionString = builder.ConnectionString;
         }
+
+        public SqlConnectionFactory(string connectionString, bool create) : this(connectionString, new AnnotationMapping(), create) { }
         #endregion
 
         #region Database Structure

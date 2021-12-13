@@ -9,7 +9,6 @@ namespace NickX.TinyORM.Mapping.MappingUtils
         public static PropertyInfo ToProperty<TType>(this Expression<Func<TType, object>> propertyLambda) where TType : class
         {
             MemberExpression expression = null;
-
             if (propertyLambda.Body is UnaryExpression)
             {
                 var unaryExpression = (UnaryExpression)propertyLambda.Body;

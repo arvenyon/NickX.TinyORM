@@ -5,9 +5,6 @@ namespace NickX.TinyORM.Persistence.Repositories.Interfaces
 {
     public interface IRepository<T> where T : class, new()
     {
-        //void BulkInsert(T[] entity);
-        //void BulkUpdate(T[] entity);
-        //void BulkDelete(T[] entity);
         object Insert(T entity);
         void Update(T entity);
         void Delete(T entity);
