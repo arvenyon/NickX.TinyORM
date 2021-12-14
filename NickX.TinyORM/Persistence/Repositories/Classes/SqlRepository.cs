@@ -61,15 +61,15 @@ namespace NickX.TinyORM.Persistence.Repositories.Classes
         {
             List<T> retVal = new();
 
-            var columns = new List<string>();
-            foreach (var column in _selectColumns)
-            {
-                var sCol = string.Format("[{0}] as '{1}'", column.ColumnName, column.Property.Name);
-                columns.Add(sCol);
-            }
-            var sColumns = string.Join(',', columns);
+            //var columns = new List<string>();
+            //foreach (var column in _selectColumns)
+            //{
+            //    var sCol = string.Format("[{0}] as '{1}'", column.ColumnName, column.Property.Name);
+            //    columns.Add(sCol);
+            ////}
+            //var sColumns = string.Join(',', columns);
 
-            string sQuery = string.Format(@"select {0} from [{1}]", sColumns, _table.TableName);
+            string sQuery = string.Format(@"select {0} from [{1}]", BuildSelectColumns(), _table.TableName);
             using (var con = _conFactory.Create())
             {
                 con.Open();
@@ -88,23 +88,29 @@ namespace NickX.TinyORM.Persistence.Repositories.Classes
         public void Delete(T entity)
         {
             // get key value
-            var key = _table.PrimaryKey.Property.GetValue(entity);
-            key = key.ConvertValueForSql();
+            var key = _table.PrimaryKey.Property.GetValue(entity).ConvertValueForSql();
+            //key = key.ConvertValueForSql();
 
             // build delete statement
-            var query = string.Format(@"delete from [{0}] where [{1}] = '{2}'", _table.TableName, _table.PrimaryKey.ColumnName, key);
+            var query = string.Format(@"delete from [{0}] where [{1}] = @key", _table.TableName, _table.PrimaryKey.ColumnName);
 
             // create new connection
             using (var con = _conFactory.Create())
             {
-                // open connection
-                con.Open();
+                using (var cmd = new SqlCommand(query, con))
+                {
+                    // add parameters
+                    cmd.Parameters.AddWithValue("@key", key);
 
-                // execute delete statement
-                new SqlCommand(query, con).ExecuteNonQuery();
+                    // open connection
+                    con.Open();
 
-                // invoke event if subscribed
-                this.OnDelete?.Invoke(this, entity);
+                    // finally execute 
+                    cmd.ExecuteNonQuery();
+
+                    // invoke event if subscribed
+                    this.OnDelete?.Invoke(this, entity);
+                }
             }
         }
 
@@ -119,11 +125,20 @@ namespace NickX.TinyORM.Persistence.Repositories.Classes
             // create new connection
             using (var con = _conFactory.Create())
             {
-                // open connection
-                con.Open();
+                using (var cmd = new SqlCommand(statement, con))
+                {
+                    // add parameters from query condition builder
+                    foreach (var parameter in queryConditionBuilder.Parameters)
+                    {
+                        cmd.Parameters.AddWithValue(parameter.Key, parameter.Value);
+                    }
 
-                // return true if count is greather than zero, else false
-                return (int)new SqlCommand(statement, con).ExecuteScalar() > 0;
+                    // open connection
+                    con.Open();
+
+                    // return true if count is greather than zero, else false
+                    return (int)cmd.ExecuteScalar() > 0;
+                }
             }
         }
 
@@ -133,20 +148,28 @@ namespace NickX.TinyORM.Persistence.Repositories.Classes
             var insertColumns = new List<string>();
             var insertValues = new List<string>();
 
+            // prepare params handling
+            var parameters = new Dictionary<string, object>();
+            var paramIndex = 1;
+
             foreach (var col in _insertColumns)
             {
                 // convert value for sql
-                object val = col.Property.GetValue(entity);
-                if (col.Property.PropertyType.IsEnum)
-                {
-                    val = (int)col.Property.GetValue(entity);
-                }
-                val = val.ConvertValueForSql();
-                
+                object val = col.Property.GetValue(entity).ConvertValueForSql();
+                //if (col.Property.PropertyType.IsEnum)
+                //{
+                //    val = (int)col.Property.GetValue(entity);
+                //}
+                //val = val.ConvertValueForSql();
+
+                // get param name
+                var param = "@p" + paramIndex;
+                paramIndex++;
 
                 // build parts
                 insertColumns.Add(string.Format(@"[{0}]", col.ColumnName));
-                insertValues.Add(string.Format(@"'{0}'", val));
+                insertValues.Add(param);
+                parameters.Add(param, val);
             }
 
             // build query parts
@@ -163,17 +186,24 @@ namespace NickX.TinyORM.Persistence.Repositories.Classes
             // create new connection
             using (var con = _conFactory.Create())
             {
-                // open connection
-                con.Open();
+                using (var cmd = new SqlCommand(query, con))
+                {
+                    foreach (var parameter in parameters)
+                    {
+                        cmd.Parameters.AddWithValue(parameter.Key, parameter.Value);
+                    }
+                    // open connection
+                    con.Open();
 
-                // create new sqlcommand & execute non query
-                var key = new SqlCommand(query, con).ExecuteScalar();
+                    // get key
+                    var key = cmd.ExecuteScalar();
 
-                // invoke event if subscribed
-                this.OnInsert?.Invoke(this, Single(key));
+                    // invoke event if subscribed
+                    this.OnInsert?.Invoke(this, Single(key));
 
-                // return converted for .NET
-                return key.ConvertValueFromSql(_table.PrimaryKey.Property.PropertyType);
+                    // return converted for .NET
+                    return key.ConvertValueFromSql(_table.PrimaryKey.Property.PropertyType);
+                }
             }
         }
 
@@ -197,6 +227,12 @@ namespace NickX.TinyORM.Persistence.Repositories.Classes
                 // init new sql command using built query & created connection
                 using (var cmd = new SqlCommand(sQuery, con))
                 {
+                    // add parameters
+                    foreach (var parameter in queryConditionBuilder.Parameters)
+                    {
+                        cmd.Parameters.AddWithValue(parameter.Key, parameter.Value);
+                    }
+
                     // read data & convert to object
                     using (var reader = cmd.ExecuteReader())
                     {
@@ -219,7 +255,7 @@ namespace NickX.TinyORM.Persistence.Repositories.Classes
             var selectColumns = BuildSelectColumns();
 
             // build full statement
-            var query = string.Format("select top 1 {0} from [{1}] where [{2}] = '{3}'", selectColumns, _table.TableName, _table.PrimaryKey.ColumnName, key);
+            var query = string.Format("select top 1 {0} from [{1}] where [{2}] = @key", selectColumns, _table.TableName, _table.PrimaryKey.ColumnName);
 
             // create new connection
             using (var con = _conFactory.Create())
@@ -230,6 +266,8 @@ namespace NickX.TinyORM.Persistence.Repositories.Classes
                 List<T> found = new();
                 using (var cmd = new SqlCommand(query, con))
                 {
+                    cmd.Parameters.AddWithValue("@key", key);
+
                     using (var reader = cmd.ExecuteReader())
                     {
                         while (reader.Read())
@@ -259,6 +297,9 @@ namespace NickX.TinyORM.Persistence.Repositories.Classes
                 List<T> found = new();
                 using (var cmd = new SqlCommand(query, con))
                 {
+                    foreach (var param in queryConditionBuilder.Parameters)
+                        cmd.Parameters.AddWithValue(param.Key, param.Value);
+
                     using (var reader = cmd.ExecuteReader())
                     {
                         while (reader.Read())
@@ -277,20 +318,28 @@ namespace NickX.TinyORM.Persistence.Repositories.Classes
             // get update columns & values
             List<string> updateColumns = new();
 
+            // prepare params handling
+            var parameters = new Dictionary<string, object>();
+            var paramIndex = 1;
+
             // build
             foreach (var col in _updateColumns)
             {
-                object val = null;
-                if (col.Property.PropertyType.IsEnum)
-                {
-                    val = ((int)col.Property.GetValue(entity)).ConvertValueForSql();
-                }
-                else
-                { 
-                    val = col.Property.GetValue(entity).ConvertValueForSql();
-                }
+                object val = col.Property.GetValue(entity).ConvertValueForSql();
+                //if (col.Property.PropertyType.IsEnum)
+                //{
+                //    val = ((int)col.Property.GetValue(entity)).ConvertValueForSql();
+                //}
+                //else
+                //{ 
+                //    val = col.Property.GetValue(entity).ConvertValueForSql();
+                //}
 
-                updateColumns.Add(string.Format("[{0}] = '{1}'", col.ColumnName, val));
+                var param = "@p" + paramIndex;
+                paramIndex++;
+                parameters.Add(param, val); 
+
+                updateColumns.Add(string.Format("[{0}] = {1}", col.ColumnName, param));
             }
             string qUpdateColumns = string.Join(",", updateColumns);
 
@@ -301,23 +350,32 @@ namespace NickX.TinyORM.Persistence.Repositories.Classes
             var existingEntity = Single(key);
 
             // build update query
-            string query = string.Format("update [{0}] set {1} where [{2}] = '{3}'",
+            string query = string.Format("update [{0}] set {1} where [{2}] = @key",
                 _table.TableName,
                 qUpdateColumns,
-                _table.PrimaryKey.ColumnName,
-                key);
+                _table.PrimaryKey.ColumnName);
 
             // create new connection
             using (var con = _conFactory.Create())
             {
-                // open connection
-                con.Open();
+                using (var cmd = new SqlCommand(query, con))
+                {
+                    // add all parameters
+                    foreach (var param in parameters)
+                        cmd.Parameters.AddWithValue(param.Key, param.Value);
 
-                // init new command & execute
-                new SqlCommand(query, con).ExecuteNonQuery();
+                    // add key parameter
+                    cmd.Parameters.AddWithValue("@key", key);
 
-                // invoke event if subscribed
-                this.OnUpdate?.Invoke(this, entity, existingEntity);
+                    // open connection
+                    con.Open();
+
+                    // init new command & execute
+                    cmd.ExecuteNonQuery();
+
+                    // invoke event if subscribed
+                    this.OnUpdate?.Invoke(this, entity, existingEntity);
+                }
             }
         } 
         #endregion

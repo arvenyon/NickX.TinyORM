@@ -5,7 +5,7 @@ namespace ConsoleTest.Models
 {
     public abstract class BaseModel
     {
-        [PrimaryKey]
+        [PrimaryKey, Column("Guid", false, NickX.TinyORM.Mapping.Enums.DefaultValues.UniqueIdentifier)]
         public Guid Guid { get; set; }
         public DateTime DateCreate { get; set; }
         public DateTime DateModified { get; set; }

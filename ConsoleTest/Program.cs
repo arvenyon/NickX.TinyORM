@@ -1,9 +1,7 @@
 ﻿using ConsoleTest.Models;
+using Microsoft.Extensions.Configuration;
 using NickX.TinyORM.Mapping.Classes.Annotation;
-using NickX.TinyORM.Mapping.Classes.Fluent;
-using NickX.TinyORM.Mapping.Enums;
 using NickX.TinyORM.Persistence.Connections.Classes;
-using NickX.TinyORM.Persistence.Queries;
 using NickX.TinyORM.Persistence.Repositories.Classes;
 using System;
 
@@ -15,7 +13,16 @@ namespace ConsoleTest
     {
         static void Main(string[] args)
         {
-            var conFactory = new SqlConnectionFactory(@"Server=localhost\dev;Database=__AnnotationMappingTEST;Integrated Security=True", true);
+
+            var config = new ConfigurationBuilder()
+                .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
+                .AddJsonFile("appsettings.json", true, true)
+                .AddUserSecrets<Program>()
+                .Build();
+
+            var conString = config.GetConnectionString("LocalhostDev");
+
+            var conFactory = new SqlConnectionFactory(conString, true);
             var mapping = (AnnotationMapping)conFactory.Mapping;
             mapping.RegisterType<CompanyModel>();
             mapping.RegisterType<PersonModel>();
@@ -23,6 +30,7 @@ namespace ConsoleTest
             var companyRepository = new SqlRepository<CompanyModel>(conFactory);
             var personRepository = new SqlRepository<PersonModel>(conFactory);
 
+            #region EventHandling
             companyRepository.OnInsert += (sender, inserted) =>
             {
                 Console.WriteLine("Company has been inserted: ");
@@ -40,6 +48,41 @@ namespace ConsoleTest
                 Console.WriteLine("Deleted Entity:");
                 Console.WriteLine(deleted);
             };
+            #endregion
+
+
+            //// GET ALL
+            //var all = companyRepository.All();
+
+            //// DELETE & GET SINGLE
+            //var toDelete = companyRepository.Single(Guid.Parse("66393AA8-BC5C-EC11-839C-00E04CC3A503"));
+            //companyRepository.Delete(toDelete);
+
+            //// GET MULTIPLE
+            //var multiple = companyRepository.Multiple(
+            //    companyRepository.CreateQueryConditionBuilder()
+            //        .Start(c => c.CompanyType, QueryOperators.Equals, CompanyTypes.Customer));
+
+            //// EXISTS
+            //var exists = companyRepository.Exists(companyRepository.CreateQueryConditionBuilder()
+            //    .Start(c => c.CompanyType, QueryOperators.Equals, CompanyTypes.Customer));
+
+            //// INSERT
+            //var newCompany = new CompanyModel()
+            //{
+            //    Name = "Example Company GmbH",
+            //    CompanyType = CompanyTypes.Customer,
+            //    DateCreate = DateTime.Now,
+            //    DateModified = DateTime.Now,
+            //    Description = "Just an example company."
+            //};
+            //var insertedGuid = companyRepository.Insert(newCompany);
+
+            //// UPDATE
+            //var current = companyRepository.Single(Guid.Parse("C342D848-C15C-EC11-839C-00E04CC3A503"));
+            // current.Name = "NOT ExampelCompany GmbH";
+            // companyRepository.Update(current);
+
 
             Console.WriteLine("Finished!");
             Console.ReadKey();

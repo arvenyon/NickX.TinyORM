@@ -3,17 +3,18 @@ using NickX.TinyORM.Mapping.MappingUtils;
 using NickX.TinyORM.Persistence.Attributes;
 using NickX.TinyORM.Persistence.PersistenceUtils;
 using System;
-using System.Linq;
+using System.Collections.Generic;
 using System.Linq.Expressions;
-using System.Reflection;
 
 namespace NickX.TinyORM.Persistence.Queries
 {
     public class QueryConditionBuilder<T> where T : class, new()
     {
         public string Query { get; private set; }
+        public Dictionary<string, object> Parameters { get; private set; } = new Dictionary<string, object>();  
 
         private IMapping _mapping;
+        private int _paramIndex = 1;
 
         public QueryConditionBuilder(IMapping mapping)
         {
@@ -43,27 +44,43 @@ namespace NickX.TinyORM.Persistence.Queries
         {
             var queryOperatorSqlValue = queryOperator.GetAttribute<QueryOperatorAttribute>().SqlValue;
             var columnName = _mapping.ResolveColumnName(propertyExpression);
+
+            //// enum handling
+            //var property = propertyExpression.ToProperty();
+            //if (property.PropertyType.IsEnum && value.GetType() != typeof(int))
+            //    value = (int)value;
+
             value = value.ConvertValueForSql();
             switch (queryOperator)
             {
                 case QueryOperators.Contains:
                 case QueryOperators.NotContains:
-                    value = string.Format(@"'%{0}%'", value);
+                    value = string.Format(@"%{0}%", value);
                     break;
                 case QueryOperators.StartsWith:
                 case QueryOperators.NotStartsWith:
-                    value = string.Format(@"'{0}%'", value);
+                    value = string.Format(@"{0}%", value);
                     break;
                 case QueryOperators.EndsWith:
                 case QueryOperators.NotEndsWith:
-                    value = string.Format(@"'%{0}'", value);
+                    value = string.Format(@"%{0}", value);
                     break;
                 default:
-                    value = string.Format(@"'{0}'", value);
+                    value = string.Format(@"{0}", value);
                     break;
             }
 
-            return string.Format("[{0}] {1} {2}", columnName, queryOperatorSqlValue, value);
+            // create param name from index
+            var param = "@p" + _paramIndex;
+            
+            // up ze index of ze params
+            _paramIndex++;
+
+            // cache param name & its value in parameters dict
+            this.Parameters.Add(param, value);
+
+            // build query & return
+            return string.Format("[{0}] {1} {2}", columnName, queryOperatorSqlValue, param);
         }
 
     }

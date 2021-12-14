@@ -33,15 +33,19 @@ namespace NickX.TinyORM.Persistence.PersistenceUtils
             return t;
         }
 
-        public static string ConvertValueForSql(this object value)
+        public static object ConvertValueForSql(this object value)
         {
             if (value == null)
-                return "";
+                return null;
 
-            string retVal = value.ToString();
+            object retVal = value;
             if (value.GetType() == typeof(bool))
             {
-                retVal = (bool)value == true ? "1" : "0";
+                retVal = ((bool)value) == true ? 1 : 0;
+            }
+            if (value.GetType().IsEnum && value.GetType() != typeof(int))
+            {
+                retVal = (int)value;
             }
             return retVal;
         }
