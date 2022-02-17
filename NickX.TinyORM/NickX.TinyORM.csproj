@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
-    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
     <Authors>NickX</Authors>
     <Description>TinyORM - Simple, lightweight .NET MicroORM for SQL-Server that is capable of creating the database structure for you and provides a generic repository layer.</Description>
     <PackageReadmeFile>README.md</PackageReadmeFile>
